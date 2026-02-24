@@ -1,0 +1,45 @@
+{
+    "version": "4",
+    "groupKey": "{}:{alertname=\"NodeSystemSaturation\"}",
+    "status": "firing",
+    "receiver": "telegram-adapter",
+    "groupLabels": {
+        "alertname": "NodeSystemSaturation"
+    },
+    "commonLabels": {
+        "alertname": "NodeSystemSaturation",
+        "alertgroup": "node-exporter",
+        "cluster": "us-idc-monitoring",
+        "prometheus": "monitoring/vm-cluster-victoria-metrics-k8s-stack",
+        "severity": "warning",
+        "target_group": "us-idc-h200"
+    },
+    "commonAnnotations": {
+        "description": "System load per core at us-h200-4 has been above 2 for the last 15 minutes, is currently at 2.91.",
+        "summary": "System saturated, load per core is very high."
+    },
+    "externalURL": "https://alertmanager.example.com",
+    "alerts": [
+        {
+            "status": "firing",
+            "labels": {
+                "alertname": "NodeSystemSaturation",
+                "alertgroup": "node-exporter",
+                "cluster": "us-idc-monitoring",
+                "instance": "us-h200-4",
+                "job": "us-idc-h200",
+                "loc": "us",
+                "prometheus": "monitoring/vm-cluster-victoria-metrics-k8s-stack",
+                "severity": "warning",
+                "target_group": "us-idc-h200"
+            },
+            "annotations": {
+                "description": "System load per core at us-h200-4 has been above 2 for the last 15 minutes, is currently at 2.91.",
+                "summary": "System saturated, load per core is very high."
+            },
+            "startsAt": "2023-10-25T10:00:00Z",
+            "endsAt": "0001-01-01T00:00:00Z",
+            "generatorURL": "http://example.com"
+        }
+    ]
+}

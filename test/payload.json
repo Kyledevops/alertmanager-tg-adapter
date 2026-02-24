@@ -1,0 +1,55 @@
+{
+  "version": "4",
+  "groupKey": "{}:{alertname=\"HighMemoryUsage\"}",
+  "status": "firing",
+  "receiver": "telegram-adapter",
+  "groupLabels": {
+    "alertname": "HighMemoryUsage"
+  },
+  "commonLabels": {
+    "alertname": "HighMemoryUsage",
+    "severity": "critical",
+    "instance": "server-01"
+  },
+  "commonAnnotations": {
+    "summary": "High memory usage detected",
+    "description": "Memory usage is above 90% for more than 5 minutes."
+  },
+  "externalURL": "https://alertmanager.example.com",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "HighMemoryUsage",
+        "severity": "critical",
+        "instance": "server-01",
+        "job": "node_exporter"
+      },
+      "annotations": {
+        "summary": "High memory usage on server-01",
+        "description": "Memory usage is at 92%.",
+        "runbook_url": "https://wiki.example.com/runbook/high-memory"
+      },
+      "startsAt": "2023-10-25T10:00:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://vmalert-vm-cluster-victoria-metrics-k8s-stack-7ff956b688-cp58p:8080/vmalert/alert?group_id=16917883142823475846&alert_id=17621036420608559224"
+    },
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "HighMemoryUsage",
+        "severity": "warning",
+        "instance": "server-02",
+        "job": "node_exporter"
+      },
+      "annotations": {
+        "summary": "High memory usage on server-02",
+        "description": "Memory usage is at 85%.",
+        "runbook_url": "https://wiki.example.com/runbook/high-memory"
+      },
+      "startsAt": "2023-10-25T10:05:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "https://prometheus.example.com/graph?g0.expr=node_memory_MemTotal_bytes_server02"
+    }
+  ]
+}

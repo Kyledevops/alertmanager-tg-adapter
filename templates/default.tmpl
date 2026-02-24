@@ -1,0 +1,81 @@
+{{- $status := .Status -}}
+{{- $emoji := "🔥" -}}
+{{- if eq $status "resolved" -}}{{- $emoji = "✅" -}}{{- end -}}
+{{- $alertName := .CommonLabels.alertname -}}
+{{- $hasCommonAlertName := true -}}
+{{- if not $alertName -}}{{- $alertName = "Multiple Alerts" -}}{{- $hasCommonAlertName = false -}}{{- end -}}
+
+{{ $emoji }} <b>{{ $status | toUpper }}: {{ $alertName }}</b>  ·  {{ len .Alerts }} alert{{ if gt (len .Alerts) 1 }}s{{ end }}
+{{- if or .CommonLabels.cluster .CommonLabels.namespace .CommonLabels.severity }}
+
+{{- if .CommonLabels.severity }}
+{{- if eq .CommonLabels.severity "critical" }}
+🔴 <b>{{ .CommonLabels.severity | toUpper }}</b>
+{{- else if eq .CommonLabels.severity "warning" }}
+🟡 <b>{{ .CommonLabels.severity | toUpper }}</b>
+{{- else }}
+🔵 <b>{{ .CommonLabels.severity | toUpper }}</b>
+{{- end }}
+{{- end }}
+{{- if .CommonLabels.cluster }}  ·  🏷 <code>{{ .CommonLabels.cluster }}</code>{{ end }}
+{{- if .CommonLabels.namespace }}  ·  📦 <code>{{ .CommonLabels.namespace }}</code>{{ end }}
+{{- end }}
+{{- if .CommonAnnotations.description }}
+
+ℹ️ {{ .CommonAnnotations.description }}
+{{- end }}
+
+{{- if $hasCommonAlertName }}
+─────────────────
+{{- $firstAlert := index .Alerts 0 -}}
+{{- if .CommonAnnotations.summary }}
+{{ .CommonAnnotations.summary | cleanSummary }}
+{{- else if $firstAlert.Annotations.summary }}
+{{ $firstAlert.Annotations.summary | cleanSummary }}
+{{- end }}
+
+<pre>
+{{- range .Alerts }}
+{{- if .Labels.namespace }}
+- Container: {{ .Labels.container }} 
+  Pod: {{ .Labels.pod }}
+{{- else }}
+- Job: {{ .Labels.job }} 
+  Instance: {{ .Labels.instance }}
+{{- end }}
+{{- if .Annotations.value }}  Value: {{ .Annotations.value }}{{ end }}
+{{- end }}
+</pre>
+{{- else }}
+{{- range .Alerts }}
+
+─────────────────
+{{- if eq .Status "firing" }}
+🔸 {{- if not $hasCommonAlertName }} <b>{{ .Labels.alertname | htmlEscape }}</b>{{ end }}
+{{- else }}
+✅ {{- if not $hasCommonAlertName }} <b>{{ .Labels.alertname | htmlEscape }}</b>{{ end }}  <i>(resolved)</i>
+{{- end }}
+{{- if .Annotations.summary }}
+    {{ .Annotations.summary | cleanSummary | htmlEscape }}
+{{- end }}
+{{- if or .Labels.instance .Labels.pod .Labels.container .Labels.job .Labels.reason }}
+<pre>
+{{- if .Labels.instance }}
+Instance:  {{ .Labels.instance | htmlEscape }}
+{{- end }}
+{{- if .Labels.pod }}
+Pod:       {{ .Labels.pod | htmlEscape }}
+{{- end }}
+{{- if .Labels.container }}
+Container: {{ .Labels.container | htmlEscape }}
+{{- end }}
+{{- if .Labels.job }}
+Job:       {{ .Labels.job | htmlEscape }}
+{{- end }}
+{{- if .Labels.reason }}
+Reason:    {{ .Labels.reason | htmlEscape }}
+{{- end }}
+</pre>
+{{- end }}
+{{- end }}
+{{- end }}

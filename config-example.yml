@@ -1,0 +1,13 @@
+telegram_token: "YOUR_TELEGRAM_BOT_TOKEN"
+chat_id: -1234567890
+listen_addr: ":9087"
+alertmanager_internal_url: "http://localhost:9093"
+alertmanager_external_url: "https://your-alertmanager.example.com"
+template_file: "templates/default.tmpl"
+
+# 路由設定 (可選)
+# 格式: "label_name=label_value": chat_id
+routes:
+  "team=frontend": -1234567890
+  "team=backend": -1234567890
+  "severity=critical": -1234567890

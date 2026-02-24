@@ -1,0 +1,38 @@
+# ---------- Go ----------
+# Binary / build output
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+alert-tg-adapter
+
+# Test
+*.test
+*.out
+coverage.html
+
+# Dependency (vendor managed separately if needed)
+/vendor/
+
+# ---------- IDE / Editor ----------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+.agent/
+AGENTS.md
+user_rules.md
+# ---------- Docker ----------
+docker-compose.override.yml
+
+# ---------- Config (secrets) ----------
+# Uncomment if your config.yml contains real tokens/secrets:
+config.yml
+k8s.yaml
+
+# ---------- Misc ----------
+*.log
+tmp/
