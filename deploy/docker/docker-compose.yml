@@ -1,7 +1,7 @@
 version: '3'
 services:
   tg-adapter:
-    image: devops/alert-tg-adapter:v1.0
+    image: ghcr.io/kyledevops/alertmanager-tg-adapter:main
     pull_policy: always
     container_name: tg-adapter
     restart: always

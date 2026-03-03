@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: tg-adapter
-          image: devops/alert-tg-adapter:v1.0
+          image: ghcr.io/kyledevops/alertmanager-tg-adapter:main
           imagePullPolicy: Always
           ports:
             - containerPort: 9087
