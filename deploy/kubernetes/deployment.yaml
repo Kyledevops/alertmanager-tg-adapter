@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tg-adapter
+  namespace: monitoring
+  labels:
+    app: tg-adapter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tg-adapter
+  template:
+    metadata:
+      labels:
+        app: tg-adapter
+    spec:
+      containers:
+        - name: tg-adapter
+          image: devops/alert-tg-adapter:v1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9087
+              protocol: TCP
+              name: http
+          env:
+            - name: CONFIG_FILE
+              value: /app/config.yml
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config.yml
+              subPath: config.yml
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9087
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9087
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+      volumes:
+        - name: config-volume
+          configMap:
+            name: tg-adapter-config

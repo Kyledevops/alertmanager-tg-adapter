@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tg-adapter
+  namespace: monitoring
+  labels:
+    app: tg-adapter
+spec:
+  type: ClusterIP
+  selector:
+    app: tg-adapter
+  ports:
+    - port: 9087
+      targetPort: 9087
+      protocol: TCP
+      name: http
