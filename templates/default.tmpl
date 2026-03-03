@@ -5,7 +5,7 @@
 {{- $hasCommonAlertName := true -}}
 {{- if not $alertName -}}{{- $alertName = "Multiple Alerts" -}}{{- $hasCommonAlertName = false -}}{{- end -}}
 
-{{ $emoji }} <b>{{ $status | toUpper }}: {{ $alertName }}</b>  ·  {{ len .Alerts }} alert{{ if gt (len .Alerts) 1 }}s{{ end }}
+{{ $emoji }} <b>{{ $status | toUpper }}: {{ $alertName | htmlEscape }}</b>  ·  {{ len .Alerts }} alert{{ if gt (len .Alerts) 1 }}s{{ end }}
 {{- if or .CommonLabels.cluster .CommonLabels.namespace .CommonLabels.severity }}
 
 {{- if .CommonLabels.severity }}
@@ -17,21 +17,21 @@
 🔵 <b>{{ .CommonLabels.severity | toUpper }}</b>
 {{- end }}
 {{- end }}
-{{- if .CommonLabels.cluster }}  ·  🏷 <code>{{ .CommonLabels.cluster }}</code>{{ end }}
-{{- if .CommonLabels.namespace }}  ·  📦 <code>{{ .CommonLabels.namespace }}</code>{{ end }}
+{{- if .CommonLabels.cluster }}  ·  🏷 <code>{{ .CommonLabels.cluster | htmlEscape }}</code>{{ end }}
+{{- if .CommonLabels.namespace }}  ·  📦 <code>{{ .CommonLabels.namespace | htmlEscape }}</code>{{ end }}
 {{- end }}
 {{- if .CommonAnnotations.description }}
 
-ℹ️ {{ .CommonAnnotations.description }}
+ℹ️ {{ .CommonAnnotations.description | htmlEscape }}
 {{- end }}
 
 {{- if $hasCommonAlertName }}
 ─────────────────
 {{- $firstAlert := index .Alerts 0 -}}
 {{- if .CommonAnnotations.summary }}
-{{ .CommonAnnotations.summary | cleanSummary }}
+{{ .CommonAnnotations.summary | cleanSummary | htmlEscape }}
 {{- else if $firstAlert.Annotations.summary }}
-{{ $firstAlert.Annotations.summary | cleanSummary }}
+{{ $firstAlert.Annotations.summary | cleanSummary | htmlEscape }}
 {{- end }}
 
 <pre>
