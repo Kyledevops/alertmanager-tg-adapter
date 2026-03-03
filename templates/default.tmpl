@@ -37,13 +37,13 @@
 <pre>
 {{- range .Alerts }}
 {{- if .Labels.namespace }}
-- Container: {{ .Labels.container }} 
-  Pod: {{ .Labels.pod }}
+- Container: {{ .Labels.container | htmlEscape }} 
+  Pod: {{ .Labels.pod | htmlEscape }}
 {{- else }}
-- Job: {{ .Labels.job }} 
-  Instance: {{ .Labels.instance }}
+- Job: {{ .Labels.job | htmlEscape }} 
+  Instance: {{ .Labels.instance | htmlEscape }}
 {{- end }}
-{{- if .Annotations.value }}  Value: {{ .Annotations.value }}{{ end }}
+{{- if .Annotations.value }}  Value: {{ .Annotations.value | htmlEscape }}{{ end }}
 {{- end }}
 </pre>
 {{- else }}
