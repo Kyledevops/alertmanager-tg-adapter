@@ -132,6 +132,23 @@ receivers:
 | `toUpper` | 轉大寫 | `{{ .Status \| toUpper }}` |
 | `htmlEscape` | HTML 跳脫 | `{{ .Labels.instance \| htmlEscape }}` |
 | `timeFormat` | 時間格式化 | `{{ timeFormat "15:04" .StartsAt }}` |
+| `cleanSummary` | 清除 summary 開頭的 `key=value - ` 雜訊 | `{{ .Annotations.summary \| cleanSummary }}` |
+| `regexFind` | 回傳第一個符合 regex 的子字串 | `{{ regexFind "[0-9]+" .Labels.instance }}` |
+| `sortedPairs` | 將 label map 轉為依名稱排序的 `{Name, Value}` 列表（動態列出所有 label） | `{{ range sortedPairs .Labels }}...{{ end }}` |
+| `maxNameLen` | 回傳列表中最長 label 名稱長度 +1，供 `printf "%-*s"` 對齊用 | `{{ $w := maxNameLen $pairs }}` |
+
+`sortedPairs` 會自動排除不適合顯示的 label：
+
+- **Meta labels**（固定排除）：`alertname`、`severity`、`prometheus`、`alertgroup`、`target_group`、`uid`
+- **Header labels**（已顯示在訊息標頭）：`cluster`、`namespace`
+
+傳入第二個參數可對 CommonLabels 去重，只列出該 alert 與群組不同的 label：
+
+```gotmpl
+{{ range sortedPairs .Labels $.CommonLabels }}{{ .Name }}: {{ .Value }}{{ end }}
+```
+
+預設模板的明細區塊即透過此機制動態渲染所有 label，無需在模板中逐一列舉。
 
 ---
 

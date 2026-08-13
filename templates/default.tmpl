@@ -24,6 +24,15 @@
 
 ℹ️ {{ .CommonAnnotations.description | htmlEscape }}
 {{- end }}
+{{- $common := sortedPairs .CommonLabels }}
+{{- if $common }}
+<pre>
+{{- $w := maxNameLen $common }}
+{{- range $common }}
+{{ printf "%-*s %s" $w (printf "%s:" .Name) .Value | htmlEscape }}
+{{- end }}
+</pre>
+{{- end }}
 
 {{- if $hasCommonAlertName }}
 ─────────────────
@@ -34,18 +43,23 @@
 {{ $firstAlert.Annotations.summary | cleanSummary | htmlEscape }}
 {{- end }}
 
+{{- $showAlerts := false }}
+{{- range .Alerts }}{{ if or (sortedPairs .Labels $.CommonLabels) .Annotations.value }}{{ $showAlerts = true }}{{ end }}{{ end }}
+{{- if $showAlerts }}
 <pre>
 {{- range .Alerts }}
-{{- if .Labels.namespace }}
-- Container: {{ .Labels.container | htmlEscape }} 
-  Pod: {{ .Labels.pod | htmlEscape }}
+{{- $pairs := sortedPairs .Labels $.CommonLabels }}
+{{- range $i, $p := $pairs }}
+{{- if eq $i 0 }}
+- {{ $p.Name | htmlEscape }}: {{ $p.Value | htmlEscape }}
 {{- else }}
-- Job: {{ .Labels.job | htmlEscape }} 
-  Instance: {{ .Labels.instance | htmlEscape }}
+  {{ $p.Name | htmlEscape }}: {{ $p.Value | htmlEscape }}
+{{- end }}
 {{- end }}
 {{- if .Annotations.value }}  Value: {{ .Annotations.value | htmlEscape }}{{ end }}
 {{- end }}
 </pre>
+{{- end }}
 {{- else }}
 {{- range .Alerts }}
 
@@ -58,22 +72,12 @@
 {{- if .Annotations.summary }}
     {{ .Annotations.summary | cleanSummary | htmlEscape }}
 {{- end }}
-{{- if or .Labels.instance .Labels.pod .Labels.container .Labels.job .Labels.reason }}
+{{- $pairs := sortedPairs .Labels $.CommonLabels }}
+{{- if $pairs }}
 <pre>
-{{- if .Labels.instance }}
-Instance:  {{ .Labels.instance | htmlEscape }}
-{{- end }}
-{{- if .Labels.pod }}
-Pod:       {{ .Labels.pod | htmlEscape }}
-{{- end }}
-{{- if .Labels.container }}
-Container: {{ .Labels.container | htmlEscape }}
-{{- end }}
-{{- if .Labels.job }}
-Job:       {{ .Labels.job | htmlEscape }}
-{{- end }}
-{{- if .Labels.reason }}
-Reason:    {{ .Labels.reason | htmlEscape }}
+{{- $w := maxNameLen $pairs }}
+{{- range $pairs }}
+{{ printf "%-*s %s" $w (printf "%s:" .Name) .Value | htmlEscape }}
 {{- end }}
 </pre>
 {{- end }}

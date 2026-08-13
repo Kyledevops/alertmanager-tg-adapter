@@ -34,6 +34,86 @@ var (
 	leadingLabelPrefRe = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*=[^\s]+\s*[-–—:]\s*`)
 )
 
+// LabelPair is a single label rendered by the message template and /status.
+type LabelPair struct {
+	Name  string
+	Value string
+}
+
+// metaLabels are Prometheus/Alertmanager bookkeeping labels that are never
+// rendered as detail labels (alertname/severity get dedicated header styling).
+var metaLabels = map[string]struct{}{
+	"alertname":    {},
+	"severity":     {},
+	"prometheus":   {},
+	"alertgroup":   {},
+	"target_group": {},
+	"uid":          {},
+}
+
+// headerLabels are already shown in the message template's header line,
+// so the template's detail blocks skip them. /status does not.
+var headerLabels = map[string]struct{}{
+	"cluster":   {},
+	"namespace": {},
+}
+
+// statusLabelEmoji maps well-known label names to icons for /status;
+// labels not listed here fall back to "•".
+var statusLabelEmoji = map[string]string{
+	"cluster":   "🏷",
+	"namespace": "📦",
+	"instance":  "🖥",
+	"pod":       "🐳",
+	"container": "📂",
+	"job":       "⚙️",
+	"reason":    "💬",
+}
+
+// sortedLabelPairs returns labels sorted by name, minus metaLabels, minus
+// extraSkip keys, minus any key whose value equals dedupe[key] (nil disables).
+func sortedLabelPairs(labels map[string]string, extraSkip map[string]struct{}, dedupe map[string]string) []LabelPair {
+	var keys []string
+	for k := range labels {
+		if _, skip := metaLabels[k]; skip {
+			continue
+		}
+		if _, skip := extraSkip[k]; skip {
+			continue
+		}
+		if v, ok := dedupe[k]; ok && v == labels[k] {
+			continue
+		}
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	var pairs []LabelPair
+	for _, k := range keys {
+		pairs = append(pairs, LabelPair{Name: k, Value: labels[k]})
+	}
+	return pairs
+}
+
+// maxNameLen returns the longest pair name plus one (room for the colon),
+// for fixed-width alignment inside <pre> blocks.
+func maxNameLen(pairs []LabelPair) int {
+	max := 0
+	for _, p := range pairs {
+		if len(p.Name) > max {
+			max = len(p.Name)
+		}
+	}
+	return max + 1
+}
+
+// titleLabel uppercases the first rune of a label name.
+func titleLabel(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
+}
+
 // CleanAlertSummary removes common noise from Prometheus alert summaries:
 //   - Trailing label dumps    ("…text alertname=Foo instance=Bar")
 //   - Leading label prefixes  ("alertname=Foo - Some text")
@@ -125,7 +205,7 @@ func (b *Bot) HandleUpdates() {
 	for update := range updates {
 		if update.Message != nil {
 			if update.Message.IsCommand() {
-				log.Printf("🤖 Received command: /%s from @%s", update.Message.Command(), update.Message.From.UserName)
+				log.Printf("🤖 Received command: /%s from @%s (chat_id=%d)", update.Message.Command(), update.Message.From.UserName, update.Message.Chat.ID)
 				switch update.Message.Command() {
 				case "start", "help":
 					b.handleHelp(update.Message)
@@ -188,7 +268,7 @@ func (b *Bot) handleStatus(message *tgbotapi.Message) {
 	var buffer bytes.Buffer
 	buffer.WriteString(fmt.Sprintf("🔔 <b>目前共有 %d 條活躍告警:</b>\n", len(alerts)))
 
-	for i, a := range alerts {
+	for _, a := range alerts {
 		duration := time.Since(a.StartsAt)
 		alertName := a.Labels["alertname"]
 		if alertName == "" {
@@ -219,22 +299,15 @@ func (b *Bot) handleStatus(message *tgbotapi.Message) {
 		}
 
 		// Context labels
-		type labelPair struct{ key, emoji string }
-		for _, lp := range []labelPair{
-			{"cluster", "🏷"},
-			{"namespace", "📦"},
-			{"instance", "🖥"},
-			{"pod", "🐳"},
-			{"container", "📂"},
-			{"job", "⚙️"},
-			{"reason", "💬"},
-		} {
-			if v := a.Labels[lp.key]; v != "" {
-				buffer.WriteString(fmt.Sprintf("    %s <b>%s:</b>  <code>%s</code>\n",
-					lp.emoji,
-					html.EscapeString(strings.Title(lp.key)),
-					html.EscapeString(v)))
+		for _, p := range sortedLabelPairs(a.Labels, nil, nil) {
+			emoji := statusLabelEmoji[p.Name]
+			if emoji == "" {
+				emoji = "•"
 			}
+			buffer.WriteString(fmt.Sprintf("    %s <b>%s:</b>  <code>%s</code>\n",
+				emoji,
+				html.EscapeString(titleLabel(p.Name)),
+				html.EscapeString(p.Value)))
 		}
 
 		// Description or summary
@@ -243,8 +316,6 @@ func (b *Bot) handleStatus(message *tgbotapi.Message) {
 		} else if summary := a.Annotations["summary"]; summary != "" {
 			buffer.WriteString(fmt.Sprintf("    ℹ️ %s\n", html.EscapeString(CleanAlertSummary(summary))))
 		}
-
-		_ = i // suppress unused warning
 	}
 
 	msg := tgbotapi.NewMessage(message.Chat.ID, buffer.String())
@@ -658,13 +729,6 @@ func loadTemplate(path string) (*template.Template, error) {
 	if path == "" {
 		path = "templates/default.tmpl"
 	}
-	// User explicitly requested .Labels.SortedPairs behavior.
-	// We implement a helper for this since Labels is a map.
-	type LabelPair struct {
-		Name  string
-		Value string
-	}
-
 	funcMap := template.FuncMap{
 		"toUpper":    strings.ToUpper,
 		"timeFormat": func(layout string, t time.Time) string { return t.Format(layout) },
@@ -688,21 +752,17 @@ func loadTemplate(path string) (*template.Template, error) {
 			}
 			return re.FindString(s)
 		},
-		"sortedPairs": func(labels map[string]string) []LabelPair {
-			var keys []string
-			for k := range labels {
-				if k == "alertname" || k == "severity" || k == "prometheus" || k == "alertgroup" || k == "target_group" || k == "uid" {
-					continue
-				}
-				keys = append(keys, k)
+		// sortedPairs lists labels dynamically: skips meta/header labels, and
+		// with the optional second map, keys whose value matches it (dedupe
+		// per-alert labels against CommonLabels).
+		"sortedPairs": func(labels map[string]string, common ...map[string]string) []LabelPair {
+			var dedupe map[string]string
+			if len(common) > 0 {
+				dedupe = common[0]
 			}
-			sort.Strings(keys)
-			var pairs []LabelPair
-			for _, k := range keys {
-				pairs = append(pairs, LabelPair{Name: k, Value: labels[k]})
-			}
-			return pairs
+			return sortedLabelPairs(labels, headerLabels, dedupe)
 		},
+		"maxNameLen": maxNameLen,
 	}
 	return template.New(filepath.Base(path)).Funcs(funcMap).ParseFiles(path)
 }

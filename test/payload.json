@@ -23,7 +23,9 @@
         "alertname": "HighMemoryUsage",
         "severity": "critical",
         "instance": "server-01",
-        "job": "node_exporter"
+        "job": "node_exporter",
+        "team": "payments",
+        "zone": "us-east-1"
       },
       "annotations": {
         "summary": "High memory usage on server-01",
